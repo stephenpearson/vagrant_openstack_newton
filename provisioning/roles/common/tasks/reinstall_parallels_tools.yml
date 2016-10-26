@@ -7,7 +7,6 @@
   shell: uname -r
   ignore_errors: yes
   register: kernel_version
-  when: parallels_tools.stat.exists == True
 
 - name: Install kernel headers
   apt: name={{ item }} state=latest

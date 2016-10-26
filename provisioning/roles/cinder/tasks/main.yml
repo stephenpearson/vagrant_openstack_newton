@@ -1,0 +1,40 @@
+---
+- name : Create Cinder database
+  mysql_db: name=cinder state=present
+  notify:
+  - create cinder user in keystone
+
+- name: Create Cinder database user
+  mysql_user: name=cinder
+          password="{{ cinderdb_pass }}"
+          priv="cinder.*:ALL,GRANT"
+          host="{{ item }}"
+  with_items:
+    - localhost
+    - "%"
+
+- meta: flush_handlers
+
+- name: Grant cinder user access to service project via admin role
+  os_user_role: user=cinder role=admin project=service state=present
+  environment: "{{ admin_env }}"
+
+- name: Create Cinder v1 service in Keystone
+  os_keystone_service: state=present name=cinder service_type=volume
+               description="OpenStack Block Storage"
+               public_endpoint="http://controller:8776/v1/%(tenant_id)s"
+               internal_endpoint="http://controller:8776/v1/%(tenant_id)s"
+               admin_endpoint="http://controller:8776/v1/%(tenant_id)s"
+               region=RegionOne
+  environment: "{{ admin_env }}"
+
+- name: Create Cinder v2 service in Keystone
+  os_keystone_service: state=present name=cinder service_type=volume
+               description="OpenStack Block Storage"
+               public_endpoint="http://controller:8776/v2/%(tenant_id)s"
+               internal_endpoint="http://controller:8776/v2/%(tenant_id)s"
+               admin_endpoint="http://controller:8776/v2/%(tenant_id)s"
+               region=RegionOne
+  environment: "{{ admin_env }}"
+
+#-- Next step: Install and configure components

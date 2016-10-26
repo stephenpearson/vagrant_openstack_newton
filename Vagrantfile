@@ -22,19 +22,40 @@ Vagrant.configure(2) do |config|
     config.proxy.no_proxy = "#{ENV['no_proxy']},newton,controller,newton.local.xyz,controller.local.xyz,localhost,127.0.0.1,127.0.1.1"
   end
 
-  config.vm.box = "parallels/ubuntu-16.04"
   config.vm.box_check_update = true
   config.vm.network "private_network", ip: "192.168.99.3",
                      auto_config: false
-  config.vm.provider "parallels" do |vm|
+
+  config.vm.provider :libvirt do |vm, override|
+    override.vm.box = "stephenpearson/ubuntu-16.04"
+    vm.driver = "kvm"
+    vm.memory = 4096
+    vm.cpus = 2
+    vm.nested = true
+    vm.storage_pool_name = "ssd"
+
+    # Cinder storage
+    vm.storage :file, :size => "50G"
+    swift_disk = "/dev/vda"
+  end
+
+  config.vm.provider :parallels do |vm, override|
+    override.vm.box = "parallels/ubuntu-16.04"
     vm.name = "newton"
     vm.check_guest_tools = false
     vm.memory = 4096
     vm.cpus = 2
     vm.customize ["set", :id, "--nested-virt", "on"]
+
+    # Cinder storage
+    vm.customize ['set', :id, '--device-add', 'hdd', '--size', '51200']
+    swift_disk = "/dev/sda"
   end
 
   config.vm.provision "ansible" do |ansible|
     ansible.playbook = "provisioning/site.yml"
+    ansible.extra_vars = {
+      :swift_disk => swift_disk
+    }
   end
 end
