@@ -1,0 +1,53 @@
+---
+- name : Create Keystone database
+  mysql_db: name=keystone state=present
+  notify:
+  - keystone db sync
+  - bootstrap keystone
+
+- name: Create Keystone database user
+  mysql_user: name=keystone
+          password="{{ keystonedb_pass }}"
+          priv=keystone.*:ALL,GRANT
+          host={{ item }}
+  with_items:
+    - localhost
+    - "%"
+
+- name: Install Keystone components
+  apt: name={{ item }} state=latest
+       update_cache=yes cache_valid_time={{ apt_cache_time }}
+  with_items:
+  - keystone
+
+- meta: flush_handlers
+
+- name: Write adminrc file
+  template: src=adminrc.j2 dest=/root/adminrc
+            owner=root group=root mode=0755
+
+- name: Write demorc file
+  template: src=demorc.j2 dest=/root/demorc
+            owner=root group=root mode=0755
+
+- name: Create OS service project
+  os_project: domain=default description="Service Project" state=present
+              name=service
+  environment: "{{ admin_env }}"
+
+- name: Create demo project
+  os_project: domain=default description="Demo Project" state=present
+              name=demo
+  environment: "{{ admin_env }}"
+
+- name: Create demo user
+  os_user: name=demo password="{{ demo_pass }}" domain=default
+  environment: "{{ admin_env }}"
+
+- name: Create user role
+  os_keystone_role: name=user state=present
+  environment: "{{ admin_env }}"
+
+- name: Grant demo user access to demo project via user role
+  os_user_role: user=demo role=user project=demo state=present
+  environment: "{{ admin_env }}"

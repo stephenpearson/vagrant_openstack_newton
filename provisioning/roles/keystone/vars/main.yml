@@ -1,0 +1,12 @@
+---
+admin_pass: "{{ lookup('password', 'passwords/admin.pass') }}"
+demo_pass: "{{ lookup('password', 'passwords/demo.pass') }}"
+keystonedb_pass: "{{ lookup('password', 'passwords/keystonedb.pass') }}"
+admin_env:
+  OS_USERNAME: "admin"
+  OS_PASSWORD: "{{ admin_pass }}"
+  OS_PROJECT_NAME: "admin"
+  OS_USER_DOMAIN_NAME: "Default"
+  OS_PROJECT_DOMAIN_NAME: "Default"
+  OS_AUTH_URL: "http://controller:35357/v3"
+  OS_IDENTITY_API_VERSION: "3"

@@ -1,0 +1,18 @@
+---
+- name: create neutron user in keystone
+  os_user: name=neutron password="{{ neutron_pass }}" domain=default
+  environment: "{{ admin_env }}"
+
+- name: neutron db sync
+  become_user: neutron
+  shell: "neutron-db-manage --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head"
+
+- name: restart neutron services
+  service: name={{ item }} state=restarted
+  with_items:
+  - neutron-linuxbridge-agent
+  - nova-api
+  - neutron-server
+  - neutron-linuxbridge-agent
+  - neutron-dhcp-agent
+  - neutron-metadata-agent

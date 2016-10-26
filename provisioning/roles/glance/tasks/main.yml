@@ -1,0 +1,61 @@
+---
+- name : Create Glance database
+  mysql_db: name=glance state=present
+  notify:
+  - create glance user in keystone
+
+- name: Create Glance database user
+  mysql_user: name=glance
+          password="{{ glancedb_pass }}"
+          priv="glance.*:ALL,GRANT"
+          host="{{ item }}"
+  with_items:
+    - localhost
+    - "%"
+
+- meta: flush_handlers
+
+- name: Grant glance user access to service project via admin role
+  os_user_role: user=glance role=admin project=service state=present
+  environment: "{{ admin_env }}"
+
+- name: Create Glance service in Keystone
+  os_keystone_service: state=present name=glance service_type=image
+                       description="OpenStack Image Service"
+                       public_endpoint="http://controller:9292"
+                       internal_endpoint="http://controller:9292"
+                       admin_endpoint="http://controller:9292"
+                       region=RegionOne
+  environment: "{{ admin_env }}"
+
+- name: Install Glance components
+  apt: name={{ item }} state=latest
+       update_cache=yes cache_valid_time={{ apt_cache_time }}
+  with_items:
+  - glance
+
+- meta: flush_handlers
+
+- name: Write glance-api config
+  template: src=glance-api.conf.j2 dest=/etc/glance/glance-api.conf
+            owner=glance group=glance mode=0640
+  notify:
+  - glance db sync
+  - restart glance-registry
+  - restart glance-api
+
+- name: Write glance-registry config
+  template: src=glance-registry.conf.j2 dest=/etc/glance/glance-registry.conf
+            owner=glance group=glance mode=0640
+  notify:
+  - glance db sync
+  - restart glance-registry
+  - restart glance-api
+
+- meta: flush_handlers
+
+- name: Download Cirros image
+  get_url: url=http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
+           dest=/root/cirros.img mode=0440 owner=root group=root
+  notify:
+  - upload cirros to glance

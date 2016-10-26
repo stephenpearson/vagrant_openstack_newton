@@ -1,0 +1,5 @@
+.vagrant
+.venv
+venv
+provisioning/passwords
+provisioning/site.retry

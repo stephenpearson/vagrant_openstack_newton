@@ -1,0 +1,105 @@
+---
+- name : Create Nova database
+  mysql_db: name=nova_api state=present
+  notify:
+  - create nova user in keystone
+
+- name : Create Nova database
+  mysql_db: name=nova state=present
+  notify:
+  - create nova user in keystone
+
+- name: Configure Nova database user
+  mysql_user: name=nova
+          password="{{ novadb_pass }}"
+          priv="nova.*:ALL,GRANT/nova_api.*:ALL,GRANT"
+          host="{{ item }}"
+  with_items:
+    - localhost
+    - "%"
+
+- meta: flush_handlers
+
+- name: Grant nova user access to service project via admin role
+  os_user_role: user=nova role=admin project=service state=present
+  environment: "{{ admin_env }}"
+
+- name: Create Nova service in Keystone
+  os_keystone_service: state=present name=nova service_type=compute
+               description="OpenStack Compute Service"
+               public_endpoint="http://controller:8774/v2.1/%(tenant_id)s"
+               internal_endpoint="http://controller:8774/v2.1/%(tenant_id)s"
+               admin_endpoint="http://controller:8774/v2.1/%(tenant_id)s"
+               region=RegionOne
+  environment: "{{ admin_env }}"
+
+- name: Install Nova components
+  apt: name={{ item }} state=latest
+       update_cache=yes cache_valid_time={{ apt_cache_time }}
+  with_items:
+  - nova-api
+  - nova-conductor
+  - nova-consoleauth
+  - nova-novncproxy
+  - nova-scheduler
+  - nova-compute
+
+- name: Write nova.conf
+  template: src=nova.conf.j2 dest=/etc/nova/nova.conf
+            owner=nova group=nova mode=0640
+  notify:
+  - nova db sync
+  - nova api_db sync
+  - restart nova-api
+  - restart nova-consoleauth
+  - restart nova-scheduler
+  - restart nova-conductor
+  - restart nova-novncproxy
+  - restart nova-compute
+
+- meta: flush_handlers
+
+- name: Wait for Nova services to restart
+  wait_for: port=8774 delay=2
+
+- name: Create Nova flavors
+  os_nova_flavor: state=present name={{ item.name }} ram={{ item.ram }}
+                  vcpus={{ item.vcpus }} disk={{ item.disk }}
+                  flavorid={{ item.id }}
+  environment: "{{ admin_env }}"
+  with_items:
+  - name: m1.nano
+    id: 1
+    ram: 64
+    vcpus: 1
+    disk: 0
+  - name: m1.micro
+    id: 2
+    ram: 128
+    vcpus: 1
+    disk: 0
+  - name: m1.tiny
+    id: 3
+    ram: 512
+    vcpus: 1
+    disk: 1
+  - name: m1.small
+    id: 4
+    ram: 2048
+    vcpus: 1
+    disk: 20
+  - name: m1.medium
+    id: 5
+    ram: 4096
+    vcpus: 2
+    disk: 40
+  - name: m1.large
+    id: 6
+    ram: 8192
+    vcpus: 4
+    disk: 80
+  - name: m1.xlarge
+    id: 7
+    ram: 16384
+    vcpus: 8
+    disk: 160

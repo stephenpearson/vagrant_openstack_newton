@@ -1,0 +1,11 @@
+---
+- meta: flush_handlers
+
+- name: Show Horizon URL
+  debug: msg="Horizon will be available at http://{{ ansible_default_ipv4.address }}/horizon"
+
+- name: Show Login details
+  debug: msg="Log in as admin / {{ admin_pass }} in Default domain"
+
+#- name: "** WARNING ** Rebooting machine in 10 seconds"
+#  shell: "nohup bash -c 'sleep 10; reboot' &"

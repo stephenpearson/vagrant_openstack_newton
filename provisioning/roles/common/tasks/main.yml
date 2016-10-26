@@ -1,0 +1,90 @@
+---
+- name: Wait for any APT lock to be released
+  wait_unlocked: filename=/var/lib/dpkg/lock poll_interval=2.0 retries=5
+
+- name: Update APT cache and install base utils
+  apt: name={{ item }} state=latest
+       update_cache=yes cache_valid_time={{ apt_cache_time }}
+  with_items:
+  - aptitude
+  - ntp
+  - ubuntu-cloud-keyring
+  - software-properties-common
+  - python-pip
+  - linux-headers-generic
+
+- name: Install python-shade (via pip)
+  pip: name=shade state=present version=1.11.0
+
+- name: Add Newton APT repository
+  copy: src=cloudarchive-newton.list
+        dest=/etc/apt/sources.list.d/cloudarchive-newton.list
+        owner=root group=root mode=0644
+  notify: update apt cache
+
+- meta: flush_handlers
+
+- name: Enable NTP
+  service: name=ntp enabled=yes state=started
+
+- name: Configure NTP
+  copy: src=ntp.conf dest=/etc/ntp.conf
+        owner=root group=root
+  notify: restart ntp
+
+- name: Set timezone
+  template: src=timezone dest=/etc/timezone
+            owner=root group=root mode=0644
+  notify: update timezone
+
+- name: Apply all updates
+  apt: upgrade=full
+  notify:
+  - reinstall parallels tools
+
+- meta: flush_handlers
+
+- name: Create passwords dir
+  file: path=passwords state=directory
+  delegate_to: localhost
+  become: no
+
+- name: Generate passwords
+  template: src=00_ALL_PASSWORDS.j2
+            dest=passwords/00_ALL_PASSWORDS
+  delegate_to: localhost
+  become: no
+
+- name: Get provider network NIC name
+  get_provider_nic: interfaces_path="/etc/network/interfaces"
+                    networks_path="/sys/class/net"
+
+- name: Configure provider network
+  template: src=provider-networking.conf
+            dest=/etc/network/interfaces.d/{{ provider_net_nic }}.conf
+            owner=root group=root mode=0644
+
+- name: Activate provider network inteface
+  set_interface: interface={{ provider_net_nic }} state=up
+
+- name: Set contents of /etc/hosts file
+  template: src=hosts dest=/etc/hosts owner=root group=root mode=0644
+
+- name: Set hostname
+  hostname: name=newton
+
+- name: Install OpenStack command line client
+  apt: name={{ item }} state=latest
+       update_cache=yes cache_valid_time={{ apt_cache_time }}
+  with_items:
+  - python-openstackclient
+
+- name: Disable IPv6
+  sysctl: name={{ item.name }} value={{ item.value }} state=present
+  with_items:
+  - name: net.ipv6.conf.all.disable_ipv6
+    value: 1
+  - name: net.ipv6.conf.default.disable_ipv6
+    value: 1
+  - name: net.ipv6.conf.lo.disable_ipv6
+    value: 1

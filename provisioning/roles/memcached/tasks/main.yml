@@ -1,0 +1,10 @@
+---
+- name: Install RabbitMQ
+  apt: name={{ item }} state=latest
+       update_cache=yes cache_valid_time={{ apt_cache_time }}
+  with_items:
+  - memcached
+  - python-memcache
+
+- name: Ensure Memcached service is running and starts a boot
+  service: name=memcached enabled=yes state=started

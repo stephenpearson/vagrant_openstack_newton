@@ -1,0 +1,14 @@
+---
+- name: Wait to allow updates to complete
+  pause: seconds=20
+
+- name: Restart machine
+  command: shutdown -r now "Ansible updates triggered"
+  async: 0
+  poll: 0
+  ignore_errors: true
+
+- name: waiting for server to come back
+  local_action: wait_for host={{ ansible_ssh_host }}
+                state=started
+  become: false

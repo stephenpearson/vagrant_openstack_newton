@@ -1,0 +1,21 @@
+---
+- name: Checking whether Parallels Tools is installed
+  stat: path=/usr/lib/parallels-tools/install
+  register: parallels_tools
+
+- name: Get kernel version
+  shell: uname -r
+  ignore_errors: yes
+  register: kernel_version
+  when: parallels_tools.stat.exists == True
+
+- name: Install kernel headers
+  apt: name={{ item }} state=latest
+       update_cache=yes cache_valid_time={{ apt_cache_time }}
+  with_items:
+  - linux-headers-{{ kernel_version.stdout }}
+  when: parallels_tools.stat.exists == True
+
+- name: Upgrade Parallels Tools
+  command: /usr/lib/parallels-tools/install --install-unattended
+  when: parallels_tools.stat.exists == True

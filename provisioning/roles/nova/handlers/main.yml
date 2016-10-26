@@ -1,0 +1,30 @@
+---
+- name: create nova user in keystone
+  os_user: name=nova password="{{ nova_pass }}" domain=default
+  environment: "{{ admin_env }}"
+
+- name: nova db sync
+  become_user: nova
+  shell: nova-manage db sync
+
+- name: nova api_db sync
+  become_user: nova
+  shell: nova-manage api_db sync
+
+- name: restart nova-api
+  service: name=nova-api state=restarted
+
+- name: restart nova-consoleauth
+  service: name=nova-consoleauth state=restarted
+
+- name: restart nova-scheduler
+  service: name=nova-scheduler state=restarted
+
+- name: restart nova-conductor
+  service: name=nova-conductor state=restarted
+
+- name: restart nova-novncproxy
+  service: name=nova-novncproxy state=restarted
+
+- name: restart nova-compute
+  service: name=nova-compute state=restarted

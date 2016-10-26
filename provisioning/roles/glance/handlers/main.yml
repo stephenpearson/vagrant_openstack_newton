@@ -1,0 +1,20 @@
+---
+- name: create glance user in keystone
+  os_user: name=glance password="{{ glance_pass }}" domain=default
+  environment: "{{ admin_env }}"
+
+- name: glance db sync
+  become_user: glance
+  shell: glance-manage db_sync
+
+- name: restart glance-registry
+  service: name=glance-registry state=restarted
+
+- name: restart glance-api
+  service: name=glance-api state=restarted
+
+- name: upload cirros to glance
+  os_image: name=cirros container_format=bare state=present
+            filename=/root/cirros.img disk_format=qcow2
+            is_public=yes
+  environment: "{{ admin_env }}"

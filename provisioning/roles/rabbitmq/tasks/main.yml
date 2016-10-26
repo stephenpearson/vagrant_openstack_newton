@@ -1,0 +1,14 @@
+---
+- name: Install RabbitMQ
+  apt: name={{ item }} state=latest
+       update_cache=yes cache_valid_time={{ apt_cache_time }}
+  with_items:
+  - rabbitmq-server
+
+- name: Add RabbitMQ users
+  rabbitmq_user: user=openstack
+      password="{{ lookup('password', 'passwords/rabbit.pass') }}"
+      vhost=/ configure_priv=.* read_priv=.* write_priv=.* state=present
+
+- name: Enable RabbitMQ Service at boot
+  service: name=rabbitmq-server enabled=yes state=started

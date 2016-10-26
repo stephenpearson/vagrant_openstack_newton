@@ -1,0 +1,15 @@
+---
+- name: restart ntp
+  service: name=ntp state=restarted
+
+- name: update timezone
+  command: dpkg-reconfigure --frontend noninteractive tzdata
+
+- name: update apt cache
+  apt: update_cache=yes
+
+- name: reinstall parallels tools
+  include: reinstall_parallels_tools.yml
+
+- name: reboot now
+  include: reboot.yml

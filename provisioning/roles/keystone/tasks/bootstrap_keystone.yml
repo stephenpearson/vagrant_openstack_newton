@@ -1,0 +1,9 @@
+---
+- name: Run Keystone fernet_setup
+  command: keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
+
+- name: Run Keystone credential_setup
+  command: keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
+
+- name: Run Keystone bootstrap
+  command: keystone-manage bootstrap --bootstrap-password "{{ lookup('password', 'passwords/admin.pass') }}" --bootstrap-admin-url http://controller:35357/v3/ --bootstrap-internal-url http://controller:35357/v3/ --bootstrap-public-url http://controller:5000/v3/ --bootstrap-region-id RegionOne
