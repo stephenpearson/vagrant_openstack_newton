@@ -4,13 +4,13 @@
     apt_cache_time: 21600
   become: true
   roles:
-#  - common
-#  - mysql
-#  - rabbitmq
-#  - memcached
-#  - keystone
-#  - glance
-#  - nova
-#  - neutron
-#  - horizon
+  - common
+  - mysql
+  - rabbitmq
+  - memcached
+  - keystone
+  - glance
+  - nova
+  - neutron
+  - horizon
   - finish
