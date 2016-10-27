@@ -1,8 +1,10 @@
 ---
-- name : Create Cinder database
+- name: Create Cinder database
   mysql_db: name=cinder state=present
   notify:
   - create cinder user in keystone
+
+- meta: flush_handlers
 
 - name: Create Cinder database user
   mysql_user: name=cinder
@@ -29,7 +31,7 @@
   environment: "{{ admin_env }}"
 
 - name: Create Cinder v2 service in Keystone
-  os_keystone_service: state=present name=cinder service_type=volume
+  os_keystone_service: state=present name=cinderv2 service_type=volumev2
                description="OpenStack Block Storage"
                public_endpoint="http://controller:8776/v2/%(tenant_id)s"
                internal_endpoint="http://controller:8776/v2/%(tenant_id)s"
@@ -37,4 +39,24 @@
                region=RegionOne
   environment: "{{ admin_env }}"
 
-#-- Next step: Install and configure components
+- name: Install Cinder components
+  apt: name={{ item }} state=latest
+       update_cache=yes cache_valid_time={{ apt_cache_time }}
+  with_items:
+  - cinder-api
+  - cinder-scheduler
+  - cinder-volume
+  - lvm2
+
+- name: Update LVM config
+  template: src=lvm.conf.j2 dest=/etc/lvm/lvm.conf
+            owner=root group=root mode=0644
+
+- name: Create Cinder volume group
+  lvg:  vg=cinder-volumes pvs=/dev/{{ swift_disk }}
+
+- name: Write cinder.conf file
+  template: src=cinder.conf.j2 dest=/etc/cinder/cinder.conf
+  notify:
+  - cinder db sync
+  - restart cinder services

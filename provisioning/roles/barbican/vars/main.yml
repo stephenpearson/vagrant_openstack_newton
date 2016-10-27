@@ -1,9 +1,8 @@
 ---
 admin_pass: "{{ lookup('password', 'passwords/admin.pass') }}"
-mysql_root_pass: "{{ lookup('password', 'passwords/mysql_root.pass') }}"
-cinderdb_pass: "{{ lookup('password', 'passwords/cinderdb.pass') }}"
-cinder_pass: "{{ lookup('password', 'passwords/cinder.pass') }}"
 rabbit_pass: "{{ lookup('password', 'passwords/rabbit.pass') }}"
+barbicandb_pass: "{{ lookup('password', 'passwords/barbicandb.pass') }}"
+barbican_pass: "{{ lookup('password', 'passwords/barbican.pass') }}"
 admin_env:
   OS_USERNAME: "admin"
   OS_PASSWORD: "{{ admin_pass }}"
@@ -12,4 +11,3 @@ admin_env:
   OS_PROJECT_DOMAIN_NAME: "Default"
   OS_AUTH_URL: "http://controller:35357/v3"
   OS_IDENTITY_API_VERSION: "3"
-swift_disk: "{{ ansible_devices.keys()[1] }}"

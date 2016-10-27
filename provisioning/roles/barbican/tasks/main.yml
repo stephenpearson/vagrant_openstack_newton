@@ -1,0 +1,59 @@
+---
+- name: Create Barbican database
+  mysql_db: name=barbican state=present
+  notify:
+  - create barbican user in keystone
+
+- meta: flush_handlers
+
+- name: Create Barbican database user
+  mysql_user: name=barbican
+          password="{{ barbicandb_pass }}"
+          priv="barbican.*:ALL,GRANT"
+          host="{{ item }}"
+  with_items:
+    - localhost
+    - "%"
+
+- meta: flush_handlers
+
+- name: Grant barbican user access to service project via admin role
+  os_user_role: user=barbican role=admin project=service state=present
+  environment: "{{ admin_env }}"
+
+- name: Create Keystone 'creator' role for Barbican
+  os_keystone_role: name=creator state=present
+  environment: "{{ admin_env }}"
+
+- name: Grant barbican user access to service project via creator role
+  os_user_role: user=barbican role=creator project=service state=present
+  environment: "{{ admin_env }}"
+
+- name: Create Barbican service in Keystone
+  os_keystone_service: state=present name=barbican service_type=key-manager
+               description="Key Manager"
+               public_endpoint="http://controller:9311/v1/%(tenant_id)s"
+               internal_endpoint="http://controller:9311/v1/%(tenant_id)s"
+               admin_endpoint="http://controller:9311/v1/%(tenant_id)s"
+               region=RegionOne
+  environment: "{{ admin_env }}"
+
+- name: Install Barbican packages
+  apt: name={{ item }} state=latest
+       update_cache=yes cache_valid_time={{ apt_cache_time }}
+  with_items:
+  - barbican-api
+
+- name: Write barbican.conf
+  template: src=barbican.conf.j2 dest=/etc/barbican/barbican.conf
+            owner=barbican group=barbican mode=0644
+  notify:
+  - barbican db sync
+  - restart barbican services
+
+- name: Write barbican-api-paste.ini
+  template: src=barbican-api-paste.ini.j2 dest=/etc/barbican/barbican-api-paste.ini
+            owner=barbican group=barbican mode=0644
+  notify:
+  - barbican db sync
+  - restart barbican services

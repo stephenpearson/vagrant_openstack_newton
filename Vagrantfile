@@ -19,7 +19,9 @@ Vagrant.configure(2) do |config|
   if Vagrant.has_plugin?("vagrant-proxyconf")
     config.proxy.http     = ENV['http_proxy']
     config.proxy.https    = ENV['https_proxy']
-    config.proxy.no_proxy = "#{ENV['no_proxy']},newton,controller,newton.local.xyz,controller.local.xyz,localhost,127.0.0.1,127.0.1.1"
+
+    PROXY_IGNORE=%w(newton controller newton.local.xyz controller.local.xyz localhost 127.0.0.1 127.0.1.1)
+    config.proxy.no_proxy = "#{ENV['no_proxy']},#{PROXY_IGNORE.join(',')}"
   end
 
   config.vm.box_check_update = true
@@ -36,7 +38,6 @@ Vagrant.configure(2) do |config|
 
     # Cinder storage
     vm.storage :file, :size => "50G"
-    swift_disk = "/dev/vda"
   end
 
   config.vm.provider :parallels do |vm, override|
@@ -49,13 +50,9 @@ Vagrant.configure(2) do |config|
 
     # Cinder storage
     vm.customize ['set', :id, '--device-add', 'hdd', '--size', '51200']
-    swift_disk = "/dev/sda"
   end
 
   config.vm.provision "ansible" do |ansible|
     ansible.playbook = "provisioning/site.yml"
-    ansible.extra_vars = {
-      :swift_disk => swift_disk
-    }
   end
 end

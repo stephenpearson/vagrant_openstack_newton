@@ -2,3 +2,16 @@
 - name: create cinder user in keystone
   os_user: name=cinder password="{{ cinder_pass }}" domain=default
   environment: "{{ admin_env }}"
+
+- name: cinder db sync
+  become_user: cinder
+  shell: "cinder-manage db sync"
+
+- name: restart cinder services
+  service: name={{ item }} state=restarted
+  with_items:
+  - nova-api
+  - cinder-scheduler
+  - cinder-api
+  - tgt
+  - cinder-volume
