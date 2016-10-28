@@ -1,0 +1,23 @@
+---
+- name: Remove container ring builder file
+  file: path=/etc/swift/container.builder state=absent
+
+- name: Build container ring
+  command: swift-ring-builder container.builder create 10 2 1
+  args:
+    chdir: /etc/swift
+
+- name: Add nodes to container ring
+  command: swift-ring-builder container.builder add --region 1 --zone {{ item.zone }} --ip {{ ansible_default_ipv4.address }} --port 6001 --device {{ item.device }} --weight 100
+  args:
+    chdir: /etc/swift
+  with_items:
+  - zone: 1
+    device: "{{ swift_disk1 }}"
+  - zone: 1
+    device: "{{ swift_disk2 }}"
+
+- name: Rebalance container ring
+  command: swift-ring-builder container.builder rebalance
+  args:
+    chdir: /etc/swift

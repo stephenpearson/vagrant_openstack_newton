@@ -8,4 +8,4 @@
   shell: barbican-db-manage upgrade
 
 - name: restart barbican services
-  service: name=openstack-barbican-api state=restarted
+  service: name=apache2 state=restarted

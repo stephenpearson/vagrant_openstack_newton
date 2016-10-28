@@ -1,0 +1,19 @@
+---
+- name: create heat user in keystone
+  os_user: name=heat password="{{ heat_pass }}" domain=default
+  environment: "{{ admin_env }}"
+
+- name: create heat_domain_admin user in keystone
+  os_user: name=heat_domain_admin password="{{ heat_domain_admin_pass }}" domain=heat
+  environment: "{{ admin_env }}"
+
+- name: heat db sync
+  become_user: heat
+  shell: "heat-manage db_sync"
+
+- name: restart heat services
+  service: name={{ item }} state=restarted
+  with_items:
+  - heat-api
+  - heat-api-cfn
+  - heat-engine

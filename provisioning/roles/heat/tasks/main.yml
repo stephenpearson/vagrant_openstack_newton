@@ -1,0 +1,82 @@
+---
+- name: Create Heat database
+  mysql_db: name=heat state=present
+  notify:
+  - create heat user in keystone
+
+- meta: flush_handlers
+
+- name: Create Heat database user
+  mysql_user: name=heat
+          password="{{ heatdb_pass }}"
+          priv="heat.*:ALL,GRANT"
+          host="{{ item }}"
+  with_items:
+    - localhost
+    - "%"
+
+- meta: flush_handlers
+
+- name: Grant heat user access to service project via admin role
+  os_user_role: user=heat role=admin project=service state=present
+  environment: "{{ admin_env }}"
+
+- name: Create Heat orchestration service in Keystone
+  os_keystone_service: state=present name=heat service_type=orchestration
+               description="Orchestration"
+               public_endpoint="http://controller:8004/v1/%(tenant_id)s"
+               internal_endpoint="http://controller:8004/v1/%(tenant_id)s"
+               admin_endpoint="http://controller:8004/v1/%(tenant_id)s"
+               region=RegionOne
+  environment: "{{ admin_env }}"
+
+- name: Create Heat cfn service in Keystone
+  os_keystone_service: state=present name=heat-cfn service_type=cloudformation
+               description="Orchestration"
+               public_endpoint="http://controller:8000/v1"
+               internal_endpoint="http://controller:8004/v1"
+               admin_endpoint="http://controller:8000/v1"
+               region=RegionOne
+  environment: "{{ admin_env }}"
+
+- name: Create heat domain
+  os_keystone_domain: name=heat description="Stack projects and users"
+  notify:
+  - create heat_domain_admin user in keystone
+  environment: "{{ admin_env }}"
+  register: heat_domain
+
+- meta: flush_handlers
+
+- name: Grant heat_domain_admin admin access to the heat domain
+  os_user_role: user=heat_domain_admin role=admin
+                domain="{{ heat_domain['id'] }}" state=present
+  environment: "{{ admin_env }}"
+
+- name: Add heat_stack_owner role
+  os_keystone_role: name=heat_stack_owner state=present
+  environment: "{{ admin_env }}"
+
+- name: Grant heat_stack_owner access to demo project
+  os_user_role: user=demo role=heat_stack_owner project=demo
+                state=present
+  environment: "{{ admin_env }}"
+
+- name: Add heat_stack_user role
+  os_keystone_role: name=heat_stack_user state=present
+  environment: "{{ admin_env }}"
+
+- name: Install Heat components
+  apt: name={{ item }} state=latest
+       update_cache=yes cache_valid_time={{ apt_cache_time }}
+  with_items:
+  - heat-api
+  - heat-api-cfn
+  - heat-engine
+
+- name: Write out heat config
+  template: src=heat.conf.j2 dest=/etc/heat/heat.conf
+            owner=heat group=heat mode=0644
+  notify:
+  - heat db sync
+  - restart heat services

@@ -53,10 +53,12 @@
             owner=root group=root mode=0644
 
 - name: Create Cinder volume group
-  lvg:  vg=cinder-volumes pvs=/dev/{{ swift_disk }}
+  lvg:  vg=cinder-volumes pvs=/dev/{{ cinder_disk }}
 
 - name: Write cinder.conf file
   template: src=cinder.conf.j2 dest=/etc/cinder/cinder.conf
   notify:
   - cinder db sync
   - restart cinder services
+
+- meta: flush_handlers

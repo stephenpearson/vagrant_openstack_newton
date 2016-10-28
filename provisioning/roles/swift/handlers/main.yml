@@ -1,0 +1,27 @@
+---
+- name: create swift user in keystone
+  os_user: name=swift password="{{ swift_pass }}" domain=default
+  environment: "{{ admin_env }}"
+
+- name: restart rsync
+  service: name=rsync state=restarted
+
+- name: restart swift services
+  service: name={{ item }} state=restarted
+  with_items:
+  - memcached
+  - swift-proxy
+  - swift-account
+  - swift-container
+  - swift-container-updater
+  - swift-object-replicator
+  - swift-account-auditor
+  - swift-container-auditor
+  - swift-object
+  - swift-object-updater
+  - swift-account-reaper
+  - swift-container-replicator
+  - swift-object-auditor
+  - swift-account-replicator
+  - swift-container-sync
+  - swift-object-reconstructor

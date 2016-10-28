@@ -1,0 +1,135 @@
+---
+- name: Create Swift database
+  mysql_db: name=swift state=present
+  notify:
+  - create swift user in keystone
+
+- meta: flush_handlers
+
+- name: Create Swift database user
+  mysql_user: name=swift
+          password="{{ swiftdb_pass }}"
+          priv="swift.*:ALL,GRANT"
+          host="{{ item }}"
+  with_items:
+    - localhost
+    - "%"
+
+- meta: flush_handlers
+
+- name: Grant swift user access to service project via admin role
+  os_user_role: user=swift role=admin project=service state=present
+  environment: "{{ admin_env }}"
+
+- name: Create Swift service in Keystone
+  os_keystone_service: state=present name=swift service_type=object-store
+               description="OpenStack Object Storage"
+               public_endpoint="http://controller:8080/v1/AUTH_%(tenant_id)s"
+               internal_endpoint="http://controller:8080/v1/AUTH_%(tenant_id)s"
+               admin_endpoint="http://controller:8080/v1"
+               region=RegionOne
+  environment: "{{ admin_env }}"
+
+- name: Install Swift components
+  apt: name={{ item }} state=latest
+       update_cache=yes cache_valid_time={{ apt_cache_time }}
+  with_items:
+  - swift
+  - swift-proxy
+  - python-swiftclient
+  - python-keystoneclient
+  - python-keystonemiddleware
+  - memcached
+  - xfsprogs
+  - rsync
+  - swift-account
+  - swift-container
+  - swift-object
+
+- name: Create /etc/swift directory
+  file: path=/etc/swift state=directory mode=0755
+        owner=root group=root
+
+- name: Add proxy-server.conf
+  template: src=proxy-server.conf.j2 dest=/etc/swift/proxy-server.conf
+            owner=root group=root mode=0644
+
+- name: Create Swift filesystems
+  filesystem: fstype=xfs dev="/dev/{{ item }}"
+  with_items:
+  - "{{ swift_disk1 }}"
+  - "{{ swift_disk2 }}"
+
+- name: Ensure correct permissions for /srv/node
+  file: path=/srv/node state=directory mode=0755
+        owner=swift group=swift
+
+- name: Ensure correct permissions for /var/cache/swift
+  file: path=/var/cache/swift state=directory mode=0775
+        owner=root group=swift
+
+- name: Create Swift mountpoints
+  file: path="/srv/node/{{ item }}" state=directory mode=0755
+        owner=swift group=swift
+  with_items:
+  - "{{ swift_disk1 }}"
+  - "{{ swift_disk2 }}"
+
+- name: Mount Swift filesystems
+  mount: name="/srv/node/{{ item }}" fstype=xfs src="/dev/{{item}}"
+         opts=noatime,nodiratime,nobarrier,logbufs=8 dump=0 passno=2
+         state=mounted
+  with_items:
+  - "{{ swift_disk1 }}"
+  - "{{ swift_disk2 }}"
+
+- name: Add rsyncd.conf
+  template: src=rsyncd.conf.j2 dest=/etc/rsyncd.conf
+            owner=root group=root mode=0644
+
+- name: Configure /etc/default/rsync
+  template: src=rsync.j2 dest=/etc/default/rsync
+            owner=root group=root mode=0644
+  notify:
+  - restart rsync
+
+- name: Configure Swift services
+  template: src="{{ item }}-server.conf.j2"
+            dest="/etc/swift/{{ item }}-server.conf"
+            owner=root group=root mode=0644
+  with_items:
+  - account
+  - container
+  - object
+
+- meta: flush_handlers
+
+- name: Looking for account ring
+  stat: path=/etc/swift/account.ring.gz
+  register: account_ring
+
+- include: rebuild_account_ring.yml
+  when: account_ring.stat.exists == False
+
+- name: Looking for container ring
+  stat: path=/etc/swift/container.ring.gz
+  register: container_ring
+
+- include: rebuild_container_ring.yml
+  when: container_ring.stat.exists == False
+
+- name: Looking for object ring
+  stat: path=/etc/swift/object.ring.gz
+  register: object_ring
+
+- include: rebuild_object_ring.yml
+  when: object_ring.stat.exists == False
+
+- name: Set permissions on /etc/swift directory
+  file: path=/etc/swift state=directory owner=root group=swift recurse=yes
+
+- name: Install /etc/swift/swift.conf configuration
+  template: src=swift.conf.j2 dest=/etc/swift/swift.conf
+            owner=root group=swift mode=0644
+  notify:
+  - restart swift services

@@ -1,0 +1,23 @@
+---
+- name: Remove object ring builder file
+  file: path=/etc/swift/object.builder state=absent
+
+- name: Build object ring
+  command: swift-ring-builder object.builder create 10 2 1
+  args:
+    chdir: /etc/swift
+
+- name: Add nodes to object ring
+  command: swift-ring-builder object.builder add --region 1 --zone {{ item.zone }} --ip {{ ansible_default_ipv4.address }} --port 6000 --device {{ item.device }} --weight 100
+  args:
+    chdir: /etc/swift
+  with_items:
+  - zone: 1
+    device: "{{ swift_disk1 }}"
+  - zone: 1
+    device: "{{ swift_disk2 }}"
+
+- name: Rebalance object ring
+  command: swift-ring-builder object.builder rebalance
+  args:
+    chdir: /etc/swift

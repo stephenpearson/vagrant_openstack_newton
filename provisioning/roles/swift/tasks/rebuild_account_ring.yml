@@ -1,0 +1,23 @@
+---
+- name: Remove account ring builder file
+  file: path=/etc/swift/account.builder state=absent
+
+- name: Build account ring
+  command: swift-ring-builder account.builder create 10 2 1
+  args:
+    chdir: /etc/swift
+
+- name: Add nodes to account ring
+  command: swift-ring-builder account.builder add --region 1 --zone {{ item.zone }} --ip {{ ansible_default_ipv4.address }} --port 6002 --device {{ item.device }} --weight 100
+  args:
+    chdir: /etc/swift
+  with_items:
+  - zone: 1
+    device: "{{ swift_disk1 }}"
+  - zone: 1
+    device: "{{ swift_disk2 }}"
+
+- name: Rebalance account ring
+  command: swift-ring-builder account.builder rebalance
+  args:
+    chdir: /etc/swift

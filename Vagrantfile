@@ -31,12 +31,16 @@ Vagrant.configure(2) do |config|
   config.vm.provider :libvirt do |vm, override|
     override.vm.box = "stephenpearson/ubuntu-16.04"
     vm.driver = "kvm"
-    vm.memory = 4096
-    vm.cpus = 2
+    vm.memory = 8192
+    vm.cpus = 4
     vm.nested = true
     vm.storage_pool_name = "ssd"
 
     # Cinder storage
+    vm.storage :file, :size => "50G"
+
+    # Swift storage
+    vm.storage :file, :size => "50G"
     vm.storage :file, :size => "50G"
   end
 
@@ -44,11 +48,15 @@ Vagrant.configure(2) do |config|
     override.vm.box = "parallels/ubuntu-16.04"
     vm.name = "newton"
     vm.check_guest_tools = false
-    vm.memory = 4096
-    vm.cpus = 2
+    vm.memory = 8192
+    vm.cpus = 4
     vm.customize ["set", :id, "--nested-virt", "on"]
 
     # Cinder storage
+    vm.customize ['set', :id, '--device-add', 'hdd', '--size', '51200']
+
+    # Swift storage
+    vm.customize ['set', :id, '--device-add', 'hdd', '--size', '51200']
     vm.customize ['set', :id, '--device-add', 'hdd', '--size', '51200']
   end
 
