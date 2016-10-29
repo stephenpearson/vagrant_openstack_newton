@@ -139,7 +139,7 @@ devices {
 	# 
 	# This configuration option has an automatic default value.
 	# filter = [ "a|.*/|" ]
-  filter = [ "a/sda/", "a/sdb/", "a/vda/", "a/vdb/", "r/.*/"]
+  filter = [ "a|^/dev/sda.*$|", "a|^/dev/vda.*$|", "a|^/dev/sdb$|", "a|^/dev/vdb$|", "r|.*/|"]
 
 	# Configuration option devices/global_filter.
 	# Limit the block devices that are used by LVM system components.

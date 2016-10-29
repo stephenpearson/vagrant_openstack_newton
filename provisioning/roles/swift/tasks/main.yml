@@ -60,10 +60,6 @@
   - "{{ swift_disk1 }}"
   - "{{ swift_disk2 }}"
 
-- name: Ensure correct permissions for /srv/node
-  file: path=/srv/node state=directory mode=0755
-        owner=swift group=swift
-
 - name: Ensure correct permissions for /var/cache/swift
   file: path=/var/cache/swift state=directory mode=0775
         owner=root group=swift
@@ -127,6 +123,10 @@
 
 - name: Set permissions on /etc/swift directory
   file: path=/etc/swift state=directory owner=root group=swift recurse=yes
+
+- name: Ensure correct permissions for /srv/node
+  file: path=/srv/node state=directory mode=0755 recurse=yes
+        owner=swift group=swift
 
 - name: Install /etc/swift/swift.conf configuration
   template: src=swift.conf.j2 dest=/etc/swift/swift.conf

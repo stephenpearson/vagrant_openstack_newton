@@ -86,8 +86,6 @@
   - neutron db sync
   - restart neutron services
 
-- meta: flush_handlers
-
 - name: Wait for Neutron service to become available
   wait_for: port=9696 delay=2
 
@@ -101,3 +99,5 @@
   os_subnet: state=present network_name=ext_network name=ext_subnet
              cidr=192.168.99.0/24 dns_nameservers=192.168.99.1
   environment: "{{ admin_env }}"
+
+- meta: flush_handlers

@@ -14,7 +14,7 @@
   service: name=glance-api state=restarted
 
 - name: upload cirros to glance
-  os_image: name=cirros container_format=bare state=present
+  os_image: name="Cirros 0.3.4" container_format=bare state=present
             filename=/root/cirros.img disk_format=qcow2
             is_public=yes
   environment: "{{ admin_env }}"
