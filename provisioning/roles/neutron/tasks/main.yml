@@ -86,6 +86,8 @@
   - neutron db sync
   - restart neutron services
 
+- meta: flush_handlers
+
 - name: Wait for Neutron service to become available
   wait_for: port=9696 delay=2
 
