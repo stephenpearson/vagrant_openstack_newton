@@ -44,6 +44,14 @@
   - nova-scheduler
   - nova-compute
 
+- name: Hack to backport Oslo bugfix into Xenial
+  copy: src=priv_context.py
+        dest=/usr/lib/python2.7/dist-packages/oslo_privsep/priv_context.py
+        owner=root group=root mode=0644
+
+- name: Hack to make linuxbridge-agent start correctly after boot
+  copy: src=rc.local dest=/etc/rc.local owner=root group=root mode=0755
+
 - name: Write nova.conf
   template: src=nova.conf.j2 dest=/etc/nova/nova.conf
             owner=nova group=nova mode=0640
