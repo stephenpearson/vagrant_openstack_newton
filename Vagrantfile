@@ -20,11 +20,13 @@ Vagrant.configure(2) do |config|
     config.proxy.http     = ENV['http_proxy']
     config.proxy.https    = ENV['https_proxy']
 
-    PROXY_IGNORE=%w(newton controller newton.local.xyz controller.local.xyz localhost 127.0.0.1 127.0.1.1)
+    PROXY_IGNORE=%w(newton newton.local.xyz localhost 127.0.0.1 127.0.1.1)
     config.proxy.no_proxy = "#{ENV['no_proxy']},#{PROXY_IGNORE.join(',')}"
   end
 
   config.vm.box_check_update = true
+  config.vm.synced_folder ".", "/vagrant",
+      type: "rsync", rsync__exclude: ".git/"
   config.vm.network "private_network", ip: "192.168.99.3",
                      auto_config: false
 
@@ -45,8 +47,8 @@ Vagrant.configure(2) do |config|
   end
 
   config.vm.provider :parallels do |vm, override|
-    override.vm.box = "parallels/ubuntu-16.04"
-    vm.name = "newton"
+    override.vm.box = "ubuntu-16.04"
+    vm.name = "newton.local.xyz"
     vm.check_guest_tools = false
     vm.memory = 8192
     vm.cpus = 4

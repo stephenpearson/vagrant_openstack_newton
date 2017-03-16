@@ -14,10 +14,10 @@ use_neutron = True
 firewall_driver = nova.virt.firewall.NoopFirewallDriver
 
 [database]
-connection = mysql+pymysql://nova:{{ novadb_pass }}@controller/nova
+connection = mysql+pymysql://nova:{{ novadb_pass }}@newton.local.xyz/nova
 
 [api_database]
-connection = mysql+pymysql://nova:{{ novadb_pass }}@controller/nova_api
+connection = mysql+pymysql://nova:{{ novadb_pass }}@newton.local.xyz/nova_api
 
 [oslo_concurrency]
 lock_path=/var/lock/nova/tmp
@@ -29,14 +29,14 @@ use_virtio_for_bridges=True
 api_paste_config=/etc/nova/api-paste.ini
 
 [oslo_messaging_rabbit]
-rabbit_host = controller
+rabbit_host = newton.local.xyz
 rabbit_userid = openstack
 rabbit_password = {{ rabbit_pass }}
 
 [keystone_authtoken]
-auth_uri = http://controller:5000
-auth_url = http://controller:35357
-memcached_servers = controller:11211
+auth_uri = http://newton.local.xyz:5000
+auth_url = http://newton.local.xyz:35357
+memcached_servers = newton.local.xyz:11211
 auth_type = password
 project_domain_name = Default
 user_domain_name = Default
@@ -51,11 +51,11 @@ vncserver_proxyclient_address = $my_ip
 novncproxy_base_url = http://{{ ansible_default_ipv4.address }}:6080/vnc_auto.html
 
 [glance]
-api_servers = http://controller:9292
+api_servers = http://newton.local.xyz:9292
 
 [neutron]
-url = http://controller:9696
-auth_url = http://controller:35357
+url = http://newton.local.xyz:9696
+auth_url = http://newton.local.xyz:35357
 auth_type = password
 project_domain_name = Default
 user_domain_name = Default

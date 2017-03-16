@@ -24,18 +24,18 @@
 - name: Create Heat orchestration service in Keystone
   os_keystone_service: state=present name=heat service_type=orchestration
                description="Orchestration"
-               public_endpoint="http://controller:8004/v1/%(tenant_id)s"
-               internal_endpoint="http://controller:8004/v1/%(tenant_id)s"
-               admin_endpoint="http://controller:8004/v1/%(tenant_id)s"
+               public_endpoint="http://newton.local.xyz:8004/v1/%(tenant_id)s"
+               internal_endpoint="http://newton.local.xyz:8004/v1/%(tenant_id)s"
+               admin_endpoint="http://newton.local.xyz:8004/v1/%(tenant_id)s"
                region=RegionOne
   environment: "{{ admin_env }}"
 
 - name: Create Heat cfn service in Keystone
   os_keystone_service: state=present name=heat-cfn service_type=cloudformation
                description="Orchestration"
-               public_endpoint="http://controller:8000/v1"
-               internal_endpoint="http://controller:8004/v1"
-               admin_endpoint="http://controller:8000/v1"
+               public_endpoint="http://newton.local.xyz:8000/v1"
+               internal_endpoint="http://newton.local.xyz:8004/v1"
+               admin_endpoint="http://newton.local.xyz:8000/v1"
                region=RegionOne
   environment: "{{ admin_env }}"
 

@@ -27,9 +27,9 @@
 - name: Create Nova service in Keystone
   os_keystone_service: state=present name=nova service_type=compute
                description="OpenStack Compute Service"
-               public_endpoint="http://controller:8774/v2.1/%(tenant_id)s"
-               internal_endpoint="http://controller:8774/v2.1/%(tenant_id)s"
-               admin_endpoint="http://controller:8774/v2.1/%(tenant_id)s"
+               public_endpoint="http://newton.local.xyz:8774/v2.1/%(tenant_id)s"
+               internal_endpoint="http://newton.local.xyz:8774/v2.1/%(tenant_id)s"
+               admin_endpoint="http://newton.local.xyz:8774/v2.1/%(tenant_id)s"
                region=RegionOne
   environment: "{{ admin_env }}"
 

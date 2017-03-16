@@ -6,5 +6,5 @@ ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
 
 # This assumes an all-in-one style deployment
-127.0.0.1 controller compute1 block1 object1
+127.0.0.1 newton.local.xyz compute1 block1 object1
 {{ ansible_default_ipv4.address }} newton

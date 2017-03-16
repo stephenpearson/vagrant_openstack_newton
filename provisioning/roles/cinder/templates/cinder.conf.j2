@@ -12,20 +12,20 @@ volumes_dir = /var/lib/cinder/volumes
 rpc_backend = rabbit
 my_ip = {{ ansible_default_ipv4.address }}
 enabled_backends = lvm
-glance_api_servers = http://controller:9292
+glance_api_servers = http://newton.local.xyz:9292
 
 [database]
-connection = mysql+pymysql://cinder:{{ cinderdb_pass }}@controller/cinder
+connection = mysql+pymysql://cinder:{{ cinderdb_pass }}@newton.local.xyz/cinder
 
 [oslo_messaging_rabbit]
-rabbit_host = controller
+rabbit_host = newton.local.xyz
 rabbit_userid = openstack
 rabbit_password = {{ rabbit_pass }}
 
 [keystone_authtoken]
-auth_uri = http://controller:5000
-auth_url = http://controller:35357
-memcached_servers = controller:11211
+auth_uri = http://newton.local.xyz:5000
+auth_url = http://newton.local.xyz:35357
+memcached_servers = newton.local.xyz:11211
 auth_type = password
 project_domain_name = Default
 user_domain_name = Default

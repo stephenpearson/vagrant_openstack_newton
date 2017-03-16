@@ -6,4 +6,4 @@
   command: keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
 
 - name: Run Keystone bootstrap
-  command: keystone-manage bootstrap --bootstrap-password "{{ lookup('password', 'passwords/admin.pass') }}" --bootstrap-admin-url http://controller:35357/v3/ --bootstrap-internal-url http://controller:35357/v3/ --bootstrap-public-url http://controller:5000/v3/ --bootstrap-region-id RegionOne
+  command: keystone-manage bootstrap --bootstrap-password "{{ lookup('password', 'passwords/admin.pass') }}" --bootstrap-admin-url http://newton.local.xyz:35357/v3/ --bootstrap-internal-url http://newton.local.xyz:35357/v3/ --bootstrap-public-url http://newton.local.xyz:5000/v3/ --bootstrap-region-id RegionOne
