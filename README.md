@@ -6,13 +6,13 @@ virtualbox will be added later.
 
 ## Installation
 
-Make sure you have Ansible version 2.1.x installed.  The recommended approach
+Make sure you have Ansible version 2.1.x or later installed.  The recommended approach
 is to create a virtualenv and install Ansible into that.
 
 ```
 virtualenv venv
 . venv/bin/activate
-pip install ansible==2.1.2.0
+pip install ansible
 ```
 
 You also need the vagrant-hostmanager plugin.
